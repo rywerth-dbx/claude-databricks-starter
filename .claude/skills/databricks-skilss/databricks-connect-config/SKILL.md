@@ -1,6 +1,6 @@
 ---
 name: databricks-connect-config
-description: Configure Databricks Connect for seamless local-to-remote code execution. Use when setting up DatabricksSession, connecting to clusters, or switching between serverless and cluster-based execution.
+description: Configure Databricks Connect for seamless local-to-remote code execution. Use when setting up DatabricksSession, writing code for databricks, or switching between serverless and cluster-based execution.
 ---
 
 # Databricks Connect Configuration
