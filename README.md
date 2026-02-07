@@ -9,16 +9,16 @@ This starter kit provides everything you need to develop Databricks applications
 
 ### 1. 📝 Writing Code - Databricks Connect
 
-Write code locally that runs seamlessly on Databricks without any modifications. The same files work both locally and when deployed to your workspace.
+In order to work locally you need to be able to write code locally that runs seamlessly on Databricks without any modifications. [Databricks Connect](https://docs.databricks.com/aws/en/dev-tools/databricks-connect/) is the perfect tool for this. So I made a skill so claude knows how use Databricks Connect. 
 
 **Skill:** `databricks-connect-config`
-- Teaches Claude how to use Databricks Connect
-- Configure SparkSession for local-to-remote execution
-- Connect to clusters or serverless compute
+- Teaches Claude how to use Databricks Connenct
+- Configure DatabricksSession for local-to-remote execution
+- Toruble shoot connection errors
 
 ### 2. 🔧 Workspace Operations - Databricks CLI
 
-Interact with your Databricks workspace using the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/commands), which lets you do almost anything—create jobs, upload files, manage clusters, and more.
+In addition to writing and running code, you also want Claude to be able to interact with the workspace: Upload/Download files, create jobs, run jobs etc. For that I believe the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/commands) is the only "tool" you need. If Cluade knows how to use the Databricks CLI it can do pretty much anything. So I made skills so Claude knows how to verify, install, setup, and authenticate the Databricks CLI. I went ahead and also created one skill specifically for working with databricks jobs and one for working with workspace files. 
 
 **Skills:**
 - `databricks-auth-manager` - Configure OAuth authentication with profiles
@@ -28,7 +28,7 @@ Interact with your Databricks workspace using the [Databricks CLI](https://docs.
 
 ### 3. 🔍 Querying Data - Databricks DBSQL MCP Server
 
-Run SQL queries against your workspace using the [Databricks DBSQL MCP Server](https://docs.databricks.com/aws/en/generative-ai/mcp/managed-mcp), giving Claude direct access to query your data.
+Lastly, probaby the most fundamental thing you want Claude to be able to do is query your data directly. For that I supplied the [Databricks DBSQL MCP Server](https://docs.databricks.com/aws/en/generative-ai/mcp/managed-mcp), giving Claude direct access to query your data. Every workspace comes with a DBSQL mcp server, so it is the easiest way to give Claude the ability to query data you have access to.
 
 **Configuration:** `.mcp.json`
 - Configured MCP server for SQL queries
@@ -49,7 +49,7 @@ First, get the repository and configure your environment:
 ```bash
 # Clone or download this repository
 git clone <repository-url>
-cd ClaudeCodeDatabricks
+cd claude-databricks-starter
 
 # Copy the environment template
 cp .env.example .env
@@ -113,6 +113,8 @@ Now you can:
 - Manage your workspace from the command line
 
 ### 5. Extend with Custom Skills and CLAUDE.MD
+
+Once you've got a feel for things you can start molding your set up to work for you. 
 
 #### CLAUDE.MD - Project Instructions
 The `CLAUDE.md` file in this repository is currently empty and ready for you to use. This file provides persistent instructions that Claude will read in every conversation for this project. Use it to:
