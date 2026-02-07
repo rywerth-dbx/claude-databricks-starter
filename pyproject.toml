@@ -1,0 +1,12 @@
+[project]
+name = "databricks-claude-starter"
+version = "0.1.0"
+description = "Databricks + Claude Code Starter Kit - Write code, manage workspace, and query data locally"
+requires-python = ">=3.10"
+dependencies = [
+    "databricks-connect>=15.1.0",
+]
+readme = "README.md"
+
+[tool.uv]
+package = false

@@ -38,9 +38,11 @@ Lastly, probaby the most fundamental thing you want Claude to be able to do is q
 
 ### Prerequisites
 
-- Python 3.10+ (3.12 recommended)
+- [uv](https://docs.astral.sh/uv/) - Fast Python package manager (install: `curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - A Databricks workspace
 - macOS, Linux, or Windows with WSL
+
+**Note:** uv automatically manages Python 3.12 and all dependencies for you.
 
 ### 0. Initial Setup
 
@@ -50,6 +52,9 @@ First, get the repository and configure your environment:
 # Clone or download this repository
 git clone <repository-url>
 cd claude-databricks-starter
+
+# Install dependencies (creates virtual environment automatically)
+uv sync
 
 # Copy the environment template
 cp .env.example .env
@@ -79,13 +84,15 @@ source .env
 claude
 ```
 
-### 1. Set Up Environment
+### 1. Install Databricks CLI
 
-Install and verify the tools:
+Databricks Connect was installed by `uv sync`, but the Databricks CLI is a standalone binary that needs to be installed separately:
 
 ```bash
 /databricks-environment-setup
 ```
+
+This skill will install the Databricks CLI via curl and verify the installation.
 
 ### 2. Authenticate
 
@@ -152,6 +159,9 @@ Each skill you create becomes part of your toolkit and can be used across projec
 │       └── databricks-job-orchestrator/     # Job management
 ├── .mcp.json                                # MCP server configuration (DBSQL)
 ├── .env.example                             # Environment variables template
+├── .python-version                          # Python version (3.12)
+├── pyproject.toml                           # Project dependencies and metadata
+├── uv.lock                                  # Lock file for reproducible installs
 └── README.md                                # This file
 ```
 
@@ -174,6 +184,7 @@ Run `/databricks-connect-config` to test connection
 
 ## Resources
 
+- [uv - Fast Python package manager](https://docs.astral.sh/uv/)
 - [Databricks Connect](https://docs.databricks.com/dev-tools/databricks-connect/)
 - [Databricks CLI Commands](https://docs.databricks.com/aws/en/dev-tools/cli/commands)
 - [Databricks DBSQL MCP Server](https://docs.databricks.com/aws/en/generative-ai/mcp/managed-mcp)
@@ -185,4 +196,4 @@ This project is provided as-is as a starting point. Modify and extend as needed.
 
 ---
 
-**Ready to start?** Run `/databricks-environment-setup` in Claude Code!
+**Ready to start?** Run `uv sync` to install dependencies, then authenticate with `/databricks-auth-manager` in Claude Code!

@@ -9,6 +9,16 @@ description: Install and verify Databricks CLI and databricks-connect for local 
 
 This skill helps you install and verify the Databricks development toolchain, including the Databricks CLI (v0.205+) and databricks-connect (v18.x) for seamless local-to-remote code execution.
 
+## Important: Modern CLI vs Legacy CLI
+
+**The modern Databricks CLI is a standalone Go binary, NOT a Python package.**
+
+- ✅ **Modern CLI (correct)**: Installed via `curl`, `brew`, `winget` - this is what we use
+- ❌ **Legacy CLI (wrong)**: `databricks-cli` Python package (pip install databricks-cli) - do NOT use this
+- ✅ **databricks-connect**: Python package for local-to-remote execution - install via pip/uv
+
+**Never add `databricks-cli` as a Python dependency.** The CLI is a standalone binary that must be installed separately from Python packages.
+
 ## Workflow
 
 ### 1. Check Current Installation Status
