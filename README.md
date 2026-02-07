@@ -11,7 +11,7 @@ This starter kit provides everything you need to develop Databricks applications
 
 In order to work locally you need to be able to write code locally that runs seamlessly on Databricks without any modifications. [Databricks Connect](https://docs.databricks.com/aws/en/dev-tools/databricks-connect/) is the perfect tool for this. So I made a skill so claude knows how use Databricks Connect. 
 
-**Skill:** `databricks-connect-config`
+**Skill:** [`databricks-connect-config`](.claude/skills/databricks-skilss/databricks-connect-config/)
 - Teaches Claude how to use Databricks Connenct
 - Configure DatabricksSession for local-to-remote execution
 - Toruble shoot connection errors
@@ -21,10 +21,10 @@ In order to work locally you need to be able to write code locally that runs sea
 In addition to writing and running code, you also want Claude to be able to interact with the workspace: Upload/Download files, create jobs, run jobs etc. For that I believe the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/commands) is the only "tool" you need. If Cluade knows how to use the Databricks CLI it can do pretty much anything. So I made skills so Claude knows how to verify, install, setup, and authenticate the Databricks CLI. I went ahead and also created one skill specifically for working with databricks jobs and one for working with workspace files. 
 
 **Skills:**
-- `databricks-auth-manager` - Configure OAuth authentication with profiles
-- `databricks-environment-setup` - Install and verify Databricks CLI and tools
-- `databricks-job-orchestrator` - Create, run, and monitor jobs
-- `databricks-workspace-sync` - Upload and download files to/from workspace
+- [`databricks-auth-manager`](.claude/skills/databricks-skilss/databricks-auth-manager/) - Configure OAuth authentication with profiles
+- [`databricks-environment-setup`](.claude/skills/databricks-skilss/databricks-environment-setup/) - Install and verify Databricks CLI and tools
+- [`databricks-job-orchestrator`](.claude/skills/databricks-skilss/databricks-job-orchestrator/) - Create, run, and monitor jobs
+- [`databricks-workspace-sync`](.claude/skills/databricks-skilss/databricks-workspace-sync/) - Upload and download files to/from workspace
 
 ### 3. 🔍 Querying Data - Databricks DBSQL MCP Server
 
@@ -57,11 +57,12 @@ cp .env.example .env
 
 Edit `.env` and fill in:
 
-1. **DATABRICKS_WORKSPACE_URL** - Your workspace URL (e.g., `https://your-workspace.cloud.databricks.com`)
+1. **DATABRICKS_WORKSPACE_URL** - Your workspace URL (e.g., `https://your-workspace.cloud.databricks.com`) This is used for the DBSQL mcp server that gives Claude the ability to query your data. 
 
 2. **DATABRICKS_TOKEN** - Your Personal Access Token
    - Generate one from your workspace: User Settings → Developer → Access Tokens
    - [Databricks PAT Documentation](https://docs.databricks.com/en/dev-tools/auth/pat.html)
+   - This is also used for the DBSQL mcp server, so make sure it comes from the same workspace you set as the DATABRICKS_WORKSPACE_URL
 
 3. **DATABRICKS_CONFIG_PROFILE** (Optional) - Your Databricks CLI profile name
    - Used by Databricks Connect to know which workspace to connect to
@@ -134,6 +135,8 @@ Want to work with Lakebase, Databricks Apps, or other features not covered by th
 3. **Create a skill for it** - Use the included [skill-creator](/.claude/skills/skill-creator/) skill: simply tell claude to take what it's learned and use it's skill-creator skill to create a skill
 
 Each skill you create becomes part of your toolkit and can be used across projects.
+
+
 
 
 ## Project Structure
