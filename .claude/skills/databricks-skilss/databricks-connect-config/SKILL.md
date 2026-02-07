@@ -24,6 +24,169 @@ All configuration happens via environment variables, allowing the same code to r
 - **Locally** with Databricks Connect (using environment variables)
 - **In Databricks workspace** (automatically authenticated, no environment variables needed)
 
+## Prerequisites: Required Environment Variables
+
+**CRITICAL:** Before running ANY Databricks Connect code locally, you MUST set these environment variables:
+
+### Required Variables
+
+1. **DATABRICKS_CONFIG_PROFILE** (Recommended) - Your Databricks CLI profile name
+   - If not set, will use the **DEFAULT** profile
+   - Find available profiles: `databricks auth profiles`
+   - Created during authentication: `/databricks-auth-manager`
+   - **Best practice:** Always set this explicitly to avoid confusion about which workspace you're using
+
+2. **Compute Configuration** (REQUIRED) - Choose ONE:
+   - **DATABRICKS_SERVERLESS_COMPUTE_ID=auto** (Recommended) - Use serverless compute
+   - **DATABRICKS_CLUSTER_ID=<cluster-id>** - Use specific cluster
+
+### Quick Check
+
+Verify your environment variables are set:
+
+```bash
+# Check if variables are set
+echo $DATABRICKS_CONFIG_PROFILE  # Will use DEFAULT if not set
+echo $DATABRICKS_SERVERLESS_COMPUTE_ID  # Must be set
+# OR
+echo $DATABRICKS_CLUSTER_ID  # Must be set
+
+# If not set, load from .env
+source .env
+
+# Verify which workspace you'll connect to
+databricks auth profiles
+```
+
+### Confirming Your Workspace
+
+Before running code, **always verify which workspace you'll be connecting to:**
+
+```bash
+# List all profiles and their workspaces
+databricks auth profiles
+
+# If using DEFAULT profile, check which workspace it points to
+grep -A 2 "^\[DEFAULT\]" ~/.databrickscfg
+
+# Test connection and see workspace URL
+python .claude/skills/databricks-connect-config/scripts/test_connection.py
+```
+
+**If compute is not set, your code will fail with:**
+```
+Error: Cluster id or serverless are required but were not specified
+```
+
+## CRITICAL: Handling Connection Issues (For Claude)
+
+**NEVER modify Python code to fix connection issues.** Connection problems are ALWAYS solved by configuring the environment, never by changing code.
+
+### The Golden Rule:
+
+```python
+# ✅ ALWAYS write code like this - NO exceptions
+from databricks.connect import DatabricksSession
+spark = DatabricksSession.builder.getOrCreate()
+```
+
+**DO NOT:**
+- Add `os.environ` logic to set variables in code
+- Add `try/except` blocks for auth errors
+- Modify `DatabricksSession.builder` with any parameters
+- Add environment variable checks or fallbacks
+
+### When Connection Fails - Follow This Workflow:
+
+1. **Check available profiles**:
+   ```bash
+   cat ~/.databrickscfg
+   ```
+
+2. **List profiles with workspace URLs**:
+   ```bash
+   grep -E "^\[|^host" ~/.databrickscfg
+   ```
+
+3. **Ask the user which workspace** they want to connect to
+
+4. **Set DATABRICKS_CONFIG_PROFILE**:
+   ```bash
+   export DATABRICKS_CONFIG_PROFILE=<chosen-profile>
+   ```
+
+5. **Run the script unchanged**
+
+### Example Claude Workflow:
+
+```
+[Connection error occurs]
+
+Claude: I see a connection error. Let me check your available Databricks profiles.
+        [runs: cat ~/.databrickscfg]
+
+Claude: You have these workspaces:
+        - fe-vm-ryan-werth-workspace: https://fevm-ryan-werth-workspace.cloud.databricks.com
+        - e2-demo-field-eng: https://e2-demo-field-eng.cloud.databricks.com
+        - logfood: https://adb-2548836972759138.18.azuredatabricks.net
+
+        Which workspace would you like to connect to?
+
+User: Use fe-vm-ryan-werth-workspace
+
+Claude: Setting profile and running script...
+        [runs: export DATABRICKS_CONFIG_PROFILE=fe-vm-ryan-werth-workspace && python script.py]
+```
+
+### Why This Matters:
+
+- **Portability**: Same code runs locally, in notebooks, and in jobs
+- **Simplicity**: No conditional logic or environment detection needed
+- **Best Practice**: Configuration belongs in environment, not code
+- **Maintainability**: One way to do it means less confusion
+
+## When DATABRICKS_CONFIG_PROFILE is Not Set
+
+**For Claude:** If `DATABRICKS_CONFIG_PROFILE` is not set, follow this workflow:
+
+1. **Inform the user** that it will default to the DEFAULT profile
+2. **Check which workspace** the DEFAULT profile points to:
+   ```bash
+   databricks auth profiles
+   # or
+   grep -A 2 "^\[DEFAULT\]" ~/.databrickscfg | grep "host"
+   ```
+3. **Ask the user** to confirm they want to use that workspace, or help them set a different profile:
+   - **Option A:** User confirms DEFAULT is correct → proceed
+   - **Option B:** User wants a different workspace → help them set `DATABRICKS_CONFIG_PROFILE`:
+     ```bash
+     # List available profiles
+     databricks auth profiles
+
+     # Set the desired profile
+     export DATABRICKS_CONFIG_PROFILE=<chosen-profile>
+
+     # Update .env file if using one
+     echo "export DATABRICKS_CONFIG_PROFILE=<chosen-profile>" >> .env
+     ```
+
+**Example conversation:**
+```
+Claude: I notice DATABRICKS_CONFIG_PROFILE is not set. This means we'll use
+        the DEFAULT profile, which points to: https://workspace.cloud.databricks.com
+
+        Is this the workspace you want to use? If not, I can help you set a
+        different profile. Available profiles:
+        - DEFAULT (https://workspace.cloud.databricks.com)
+        - dev-workspace (https://dev.cloud.databricks.com)
+        - prod-workspace (https://prod.cloud.databricks.com)
+
+User: Let's use dev-workspace
+
+Claude: Great! Setting DATABRICKS_CONFIG_PROFILE to dev-workspace...
+        [runs: export DATABRICKS_CONFIG_PROFILE=dev-workspace]
+```
+
 ## Configuration Options
 
 ### Option 1: Serverless Compute (Recommended)
@@ -41,6 +204,10 @@ export DATABRICKS_SERVERLESS_COMPUTE_ID=auto
 - Instant startup
 - Auto-scaling
 - Pay only for what you use
+
+**Limitations:**
+- `.cache()` and `.persist()` are NOT supported on serverless compute
+- If your code needs caching, use a cluster instead
 
 **Example:**
 ```bash
@@ -330,15 +497,17 @@ Check cluster runtime version in workspace UI before installing.
 
 ## Best Practices
 
-1. **NEVER hardcode configuration in code** - Always use `DatabricksSession.builder.getOrCreate()`
-2. **Use environment variables for local development** - Set `DATABRICKS_CONFIG_PROFILE` + (`DATABRICKS_SERVERLESS_COMPUTE_ID` or `DATABRICKS_CLUSTER_ID`)
-3. **Create a .env file** - Store environment variables in a `.env` file for easy management
-4. **Add .env to .gitignore** - Never commit environment configuration to version control
-5. **Default to serverless** - Simpler and more cost-effective for most workloads
-6. **Test connection after setup** - Use `spark.range(10).count()` to verify
-7. **Match runtime versions** - Keep databricks-connect version aligned with cluster runtime
-8. **Use virtual environments** - Isolate dependencies per project
-9. **Write portable code** - Same code should run locally and in Databricks workspace
+1. **NEVER modify code to fix connection issues** - Connection problems are ALWAYS solved by setting environment variables, never by changing code
+2. **NEVER hardcode configuration in code** - Always use `DatabricksSession.builder.getOrCreate()`
+3. **When connection fails** - Check `~/.databrickscfg`, ask user which workspace, set `DATABRICKS_CONFIG_PROFILE`
+4. **Use environment variables for local development** - Set `DATABRICKS_CONFIG_PROFILE` + (`DATABRICKS_SERVERLESS_COMPUTE_ID` or `DATABRICKS_CLUSTER_ID`)
+5. **Create a .env file** - Store environment variables in a `.env` file for easy management
+6. **Add .env to .gitignore** - Never commit environment configuration to version control
+7. **Default to serverless** - Simpler and more cost-effective for most workloads (but note: no `.cache()` or `.persist()` support)
+8. **Test connection after setup** - Use `spark.range(10).count()` to verify
+9. **Match runtime versions** - Keep databricks-connect version aligned with cluster runtime
+10. **Use virtual environments** - Isolate dependencies per project
+11. **Write portable code** - Same code should run locally and in Databricks workspace
 
 ## Summary
 

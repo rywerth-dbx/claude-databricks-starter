@@ -2,7 +2,7 @@
     "mcpServers": {
         "databricks-dbsql": {
             "type": "http",
-            "url": "https://fevm-ryan-werth-workspace.cloud.databricks.com/api/2.0/mcp/sql",
+            "url": "${DATABRICKS_WORKSPACE_URL}/api/2.0/mcp/sql",
             "headers": {
                 "Authorization": "Bearer ${DATABRICKS_TOKEN}"
             }

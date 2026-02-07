@@ -1,207 +1,138 @@
 # Databricks + Claude Code Starter
 
-A comprehensive starter project for using Claude Code with Databricks, featuring custom skills for local development with remote execution via databricks-connect.
+An extremely simple setup for working with Claude and Databricks locally. Write code, manage your workspace, and query data—all from your local machine.
+
 
 ## Overview
 
-This project provides a complete development environment for writing Databricks code locally that executes remotely without modification. It includes five custom Claude Code skills that guide you through setup, authentication, configuration, and deployment.
+This starter kit provides everything you need to develop Databricks applications locally with Claude Code. It's built around three core capabilities:
 
-## Features
+### 1. 📝 Writing Code - Databricks Connect
 
-- ✅ **Local-to-Remote Execution**: Write and test code locally that runs seamlessly on Databricks
-- ✅ **No Hardcoded Values**: All skills prompt for workspace URLs, cluster IDs, and paths
-- ✅ **Multi-Workspace Support**: Manage multiple Databricks workspaces with profiles
-- ✅ **CLI Integration**: Full Databricks CLI support with OAuth authentication
-- ✅ **Job Orchestration**: Create, run, and monitor Databricks jobs from your terminal
-- ✅ **Workspace Sync**: Upload and download code, notebooks, and files
+Write code locally that runs seamlessly on Databricks without any modifications. The same files work both locally and when deployed to your workspace.
 
-## Prerequisites
+**Skill:** `databricks-connect-config`
+- Teaches Claude how to use Databricks Connect
+- Configure SparkSession for local-to-remote execution
+- Connect to clusters or serverless compute
 
-- Python 3.10+ (3.12 recommended)
-- macOS, Linux, or Windows with WSL
-- A Databricks workspace
+### 2. 🔧 Workspace Operations - Databricks CLI
+
+Interact with your Databricks workspace using the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/commands), which lets you do almost anything—create jobs, upload files, manage clusters, and more.
+
+**Skills:**
+- `databricks-auth-manager` - Configure OAuth authentication with profiles
+- `databricks-environment-setup` - Install and verify Databricks CLI and tools
+- `databricks-job-orchestrator` - Create, run, and monitor jobs
+- `databricks-workspace-sync` - Upload and download files to/from workspace
+
+### 3. 🔍 Querying Data - Databricks DBSQL MCP Server
+
+Run SQL queries against your workspace using the [Databricks DBSQL MCP Server](https://docs.databricks.com/aws/en/generative-ai/mcp/managed-mcp), giving Claude direct access to query your data.
+
+**Configuration:** `.mcp.json`
+- Configured MCP server for SQL queries
+- Uses workspace URL and authentication token
 
 ## Quick Start
 
-### 1. Set Up Your Environment
+### Prerequisites
+
+- Python 3.10+ (3.12 recommended)
+- A Databricks workspace
+- macOS, Linux, or Windows with WSL
+
+### 0. Initial Setup
+
+First, get the repository and configure your environment:
 
 ```bash
-# Use the environment setup skill
+# Clone or download this repository
+git clone <repository-url>
+cd ClaudeCodeDatabricks
+
+# Copy the environment template
+cp .env.example .env
+```
+
+Edit `.env` and fill in:
+
+1. **DATABRICKS_WORKSPACE_URL** - Your workspace URL (e.g., `https://your-workspace.cloud.databricks.com`)
+
+2. **DATABRICKS_TOKEN** - Your Personal Access Token
+   - Generate one from your workspace: User Settings → Developer → Access Tokens
+   - [Databricks PAT Documentation](https://docs.databricks.com/en/dev-tools/auth/pat.html)
+
+3. **DATABRICKS_CONFIG_PROFILE** (Optional) - Your Databricks CLI profile name
+   - Used by Databricks Connect to know which workspace to connect to
+   - If you don't know it yet, no worries—you'll set this up in Step 2
+   - You can find profiles in `~/.databrickscfg` or leave as-is for now
+
+Then, navigate to the directory and start Claude Code:
+
+```bash
+# Load environment variables
+source .env
+
+# Start Claude Code in this directory
+claude
+```
+
+### 1. Set Up Environment
+
+Install and verify the tools:
+
+```bash
 /databricks-environment-setup
 ```
 
-This will guide you through:
-- Installing Databricks CLI
-- Installing databricks-connect
-- Verifying your Python environment
-- Checking for common issues
+### 2. Authenticate
 
-### 2. Authenticate with Databricks
+Configure OAuth authentication for your workspace:
 
 ```bash
-# Use the authentication manager skill
 /databricks-auth-manager
 ```
 
-This will help you:
-- Configure OAuth authentication
-- Set up workspace profiles
-- Test connectivity
+This creates a profile in `~/.databrickscfg`. After this step, you can update `DATABRICKS_CONFIG_PROFILE` in your `.env` file if needed.
 
-### 3. Configure databricks-connect
+### 3. Configure Databricks Connect
+
+Set up local-to-remote execution:
 
 ```bash
-# Use the connect config skill
 /databricks-connect-config
 ```
 
-This will show you how to:
-- Initialize SparkSession
-- Connect to clusters or serverless compute
-- Test your connection
+### 4. Start Working!
 
-### 4. Start Coding!
+Now you can:
+- Write Python files that execute on Databricks
+- Ask Claude to query your data
+- Upload files and create jobs
+- Manage your workspace from the command line
 
-Create a Python file and run it locally:
+### 5. Extend with Custom Skills and CLAUDE.MD
 
-```python
-# my_analysis.py
-from databricks.connect import DatabricksSession
+#### CLAUDE.MD - Project Instructions
+The `CLAUDE.md` file in this repository is currently empty and ready for you to use. This file provides persistent instructions that Claude will read in every conversation for this project. Use it to:
 
-# Initialize session (executes remotely!)
-spark = DatabricksSession.builder.getOrCreate()
+- Define project-specific conventions and patterns
+- Add shortcuts and preferences for how you work
+- Document company or user specific configurations for your workspace
+- Store instructions that apply across all conversations in this directory
 
-# Your code runs on Databricks, not locally
-df = spark.range(1000)
-result = df.filter("id > 500").count()
-print(f"Count: {result}")
+Start by adding instructions about workspace and catalog names.
 
-spark.stop()
-```
+#### Creating Custom Skills
+Want to work with Lakebase, Databricks Apps, or other features not covered by the included skills?
 
-```bash
-# Run locally - executes on Databricks!
-python my_analysis.py
-```
+1. **Direct Claude to documentation** - Share Databricks docs for the feature you want to use
+2. **Work with Claude to try it** - Experiment and test the feature together
+3. **Create a skill for it** - Use the included [skill-creator](/.claude/skills/skill-creator/) skill: simply tell claude to take what it's learned and use it's skill-creator skill to create a skill
 
-## Available Skills
+Each skill you create becomes part of your toolkit and can be used across projects.
 
-### 1. databricks-environment-setup
-
-Install and verify the Databricks development toolchain.
-
-**Use when:**
-- Setting up a new development environment
-- Troubleshooting installation issues
-- Checking tool versions
-
-**Includes:**
-- `scripts/check_environment.py` - Diagnostic tool for your environment
-
-### 2. databricks-auth-manager
-
-Configure authentication using OAuth with profiles.
-
-**Use when:**
-- First-time authentication setup
-- Managing multiple workspaces
-- Troubleshooting auth issues
-
-**Includes:**
-- `scripts/auth_helper.py` - Check authentication status and profiles
-
-### 3. databricks-connect-config
-
-Set up databricks-connect for local-to-remote execution.
-
-**Use when:**
-- Initializing SparkSession
-- Configuring cluster connections
-- Testing databricks-connect
-
-**Includes:**
-- `scripts/test_connection.py` - Comprehensive connection test
-
-### 4. databricks-workspace-sync
-
-Upload and download files to/from Databricks workspace.
-
-**Use when:**
-- Deploying code to workspace
-- Backing up notebooks
-- Syncing project files
-
-**Includes:**
-- `scripts/sync_helper.py` - Interactive upload/download tool
-
-### 5. databricks-job-orchestrator
-
-Create, run, and monitor Databricks jobs.
-
-**Use when:**
-- Creating production jobs
-- Running notebooks or Python files as jobs
-- Monitoring job execution
-
-**Includes:**
-- `scripts/job_helper.py` - Interactive job management tool
-
-## Typical Workflow
-
-1. **Setup** (once)
-   ```bash
-   /databricks-environment-setup
-   /databricks-auth-manager
-   /databricks-connect-config
-   ```
-
-2. **Develop** (iterative)
-   - Write code locally with your favorite IDE
-   - Test with databricks-connect (executes remotely)
-   - No code changes needed between local and remote
-
-3. **Deploy** (when ready)
-   ```bash
-   # Upload your code
-   /databricks-workspace-sync
-
-   # Create a job
-   /databricks-job-orchestrator
-   ```
-
-## Example: End-to-End Workflow
-
-```bash
-# 1. Check environment
-python .claude/skills/databricks-environment-setup/scripts/check_environment.py
-
-# 2. Authenticate
-databricks auth login --host https://your-workspace.cloud.databricks.com
-
-# 3. Test connection
-python .claude/skills/databricks-connect-config/scripts/test_connection.py
-
-# 4. Write your code
-cat > my_job.py << 'EOF'
-from databricks.connect import DatabricksSession
-
-spark = DatabricksSession.builder.getOrCreate()
-df = spark.sql("SELECT * FROM my_table LIMIT 10")
-df.show()
-spark.stop()
-EOF
-
-# 5. Test locally (runs on Databricks)
-python my_job.py
-
-# 6. Upload to workspace
-python .claude/skills/databricks-workspace-sync/scripts/sync_helper.py \
-  upload my_job.py /Users/me/my_job.py
-
-# 7. Create and run a job
-python .claude/skills/databricks-job-orchestrator/scripts/job_helper.py \
-  create --name "My Job" --file /Users/me/my_job.py
-```
 
 ## Project Structure
 
@@ -209,94 +140,44 @@ python .claude/skills/databricks-job-orchestrator/scripts/job_helper.py \
 .
 ├── .claude/
 │   └── skills/                              # Custom Claude Code skills
-│       ├── databricks-environment-setup/    # Install & verify tools
-│       │   ├── SKILL.md
-│       │   └── scripts/
-│       │       └── check_environment.py
-│       ├── databricks-auth-manager/         # OAuth authentication
-│       │   ├── SKILL.md
-│       │   └── scripts/
-│       │       └── auth_helper.py
-│       ├── databricks-connect-config/       # Configure remote execution
-│       │   ├── SKILL.md
-│       │   └── scripts/
-│       │       └── test_connection.py
+│       ├── databricks-environment-setup/    # Install & verify CLI/tools
+│       ├── databricks-auth-manager/         # OAuth authentication setup
+│       ├── databricks-connect-config/       # Local-to-remote execution
 │       ├── databricks-workspace-sync/       # Upload/download files
-│       │   ├── SKILL.md
-│       │   └── scripts/
-│       │       └── sync_helper.py
-│       └── databricks-job-orchestrator/     # Create & run jobs
-│           ├── SKILL.md
-│           └── scripts/
-│               └── job_helper.py
-├── CLAUDE.md                                # Project instructions for Claude Code
+│       └── databricks-job-orchestrator/     # Job management
+├── .mcp.json                                # MCP server configuration (DBSQL)
+├── .env.example                             # Environment variables template
 └── README.md                                # This file
 ```
 
-## Key Design Principles
-
-1. **No Hardcoded Values**: All skills prompt for workspace URLs, cluster IDs, and paths to ensure they work in any environment
-
-2. **Profile-Based Authentication**: Support multiple workspaces through Databricks profiles
-
-3. **Simple and Direct**: Uses straightforward `DatabricksSession.builder.getOrCreate()` without unnecessary complexity
-
-4. **Flexible Structure**: No enforced directory structure - organize your code however you want
-
-5. **Interactive Helpers**: All scripts provide interactive prompts when run without arguments
-
-## Extending This Project
-
-This starter is intentionally minimal. You can extend it by:
-
-- Adding your own custom skills in `.claude/skills/`
-- Creating project-specific configuration files
-- Adding CI/CD pipelines
-- Creating shared utility modules
-- Adding testing frameworks
 
 ## Troubleshooting
 
-### Common Issues
+### CLI Not Found
+Run `/databricks-environment-setup` to install
 
-**Issue: Command not found**
-- Run `/databricks-environment-setup` to install CLI
+### Authentication Failed
+Run `/databricks-auth-manager` to configure OAuth
 
-**Issue: Authentication failed**
-- Run `/databricks-auth-manager` to configure OAuth
+### Connection Error
+Run `/databricks-connect-config` to test connection
 
-**Issue: Connection error**
-- Run `python .claude/skills/databricks-connect-config/scripts/test_connection.py`
-
-**Issue: Version mismatch**
-- Match databricks-connect version to your cluster's Databricks Runtime
-- `pip install "databricks-connect==X.Y.*"` where X.Y matches your runtime
-
-### Getting Help
-
-1. Check skill documentation: Each skill's `SKILL.md` has detailed troubleshooting
-2. Run diagnostic scripts in `scripts/` directories
-3. Check the [Databricks CLI documentation](https://docs.databricks.com/dev-tools/cli/)
-4. Check the [databricks-connect documentation](https://docs.databricks.com/dev-tools/databricks-connect/)
+### MCP Server Issues
+- Verify `.env` is sourced: `source .env`
+- Check variables are set: `echo $DATABRICKS_WORKSPACE_URL`
+- Verify token is valid: `databricks auth token`
 
 ## Resources
 
-- [Databricks Connect Documentation](https://docs.databricks.com/dev-tools/databricks-connect/)
-- [Databricks CLI Documentation](https://docs.databricks.com/dev-tools/cli/)
-- [Claude Code Documentation](https://claude.ai/code)
-- [Databricks Developer Tools](https://docs.databricks.com/dev-tools/)
+- [Databricks Connect](https://docs.databricks.com/dev-tools/databricks-connect/)
+- [Databricks CLI Commands](https://docs.databricks.com/aws/en/dev-tools/cli/commands)
+- [Databricks DBSQL MCP Server](https://docs.databricks.com/aws/en/generative-ai/mcp/managed-mcp)
+- [Claude Code](https://claude.ai/code)
 
 ## License
 
-This project is provided as-is for use as a starting point. Modify and extend as needed for your use case.
-
-## Contributing
-
-This is a starter project designed to be forked and customized. Feel free to:
-- Add new skills for your specific use cases
-- Improve existing skills
-- Share your extensions with others
+This project is provided as-is as a starting point. Modify and extend as needed.
 
 ---
 
-**Ready to get started?** Run `/databricks-environment-setup` in Claude Code to begin!
+**Ready to start?** Run `/databricks-environment-setup` in Claude Code!
