@@ -114,11 +114,10 @@ Verify Databricks Connect local-to-remote execution is working:
 
 ### 4. Start Working!
 
-Now you can:
-- Write Python files that execute on Databricks
-- Ask Claude to query your data
+Ask Claude To:
+- Analyze tables and explore schemas
+- Write scripts using Databricks Connect and run them locally
 - Upload files and create jobs
-- Manage your workspace from the command line
 
 ### 5. Extend with Custom Skills and CLAUDE.MD
 
