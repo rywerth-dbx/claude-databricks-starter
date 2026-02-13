@@ -11,6 +11,21 @@ This skill helps you upload and download files and directories to/from Databrick
 
 ## Workflow
 
+### ⚠️ Important: CLI Syntax
+
+The Databricks CLI uses `import` (NOT `upload`) and requires specific argument order:
+
+**Correct syntax:**
+```bash
+databricks workspace import TARGET_PATH --file SOURCE_FILE [FLAGS]
+```
+
+**Key points:**
+- Command is `import`, not `upload`
+- Target path is positional argument (workspace destination)
+- Source file uses `--file` flag
+- `--overwrite` flag prevents "already exists" errors
+
 ### 1. Upload Single File
 
 Upload a file to the workspace:
@@ -301,6 +316,58 @@ fi
 
 ## Troubleshooting
 
+### CLI Syntax Errors
+
+**Symptoms:** `Error: unknown flag: --overwrite` or `Error: accepts 1 arg(s), received 2`
+
+**Common Mistakes:**
+
+1. **Using "upload" instead of "import":**
+   ```bash
+   # ❌ WRONG - There is no "upload" command
+   databricks workspace upload file.py /Workspace/path
+
+   # ✅ CORRECT - Use "import" command
+   databricks workspace import /Workspace/path --file file.py
+   ```
+
+2. **Wrong argument order:**
+   ```bash
+   # ❌ WRONG - Source file as positional argument
+   databricks workspace import file.py /Workspace/path --language PYTHON
+
+   # ✅ CORRECT - Source file with --file flag, target path is positional
+   databricks workspace import /Workspace/path --file file.py --language PYTHON
+   ```
+
+3. **Missing --file flag:**
+   ```bash
+   # ❌ WRONG - Two positional arguments
+   databricks workspace import file.py /Workspace/path
+
+   # ✅ CORRECT - Use --file flag for source
+   databricks workspace import /Workspace/path --file file.py
+   ```
+
+**Key Rules:**
+- Command is `import`, NOT `upload`
+- Target path is the ONLY positional argument (comes first or last)
+- Source file MUST use `--file` flag
+- Flags like `--language`, `--format`, `--overwrite` come before or after target path
+- Full correct syntax:
+  ```bash
+  databricks workspace import [FLAGS] TARGET_PATH --file SOURCE_FILE [MORE_FLAGS]
+  ```
+
+**Example with all flags:**
+```bash
+databricks workspace import \
+  --language PYTHON \
+  --overwrite \
+  /Workspace/Users/user@example.com/script.py \
+  --file /path/to/local/script.py
+```
+
 ### Path Already Exists
 
 **Symptoms:** `Error: Path already exists`
@@ -375,16 +442,18 @@ fi
 
 ## Best Practices
 
-1. **Always use absolute paths** - Avoid relative paths for clarity
-2. **Prompt for user input** - Don't hardcode workspace paths
-3. **Use profiles for multiple workspaces** - Easier to manage
-4. **Include overwrite flag for updates** - Prevents errors on re-upload
-5. **Organize by user directory** - Use `/Workspace/Users/your-email/`
-6. **Validate paths before operations** - Use `workspace get-status` to check
-7. **Backup before large changes** - Use `export-dir` to backup first
-8. **Use appropriate formats** - JUPYTER for notebooks, SOURCE for scripts
-9. **Handle errors gracefully** - Check exit codes and provide feedback
-10. **Use workspace mkdirs** - Create directories before uploading
+1. **Use correct CLI syntax** - Command is `import` (not `upload`), source file needs `--file` flag
+2. **Always use absolute paths** - Avoid relative paths for clarity
+3. **Prompt for user input** - Don't hardcode workspace paths
+4. **Use profiles for multiple workspaces** - Easier to manage
+5. **Include overwrite flag for updates** - Prevents errors on re-upload
+6. **Organize by user directory** - Use `/Workspace/Users/your-email/`
+7. **Validate paths before operations** - Use `workspace get-status` to check
+8. **Backup before large changes** - Use `export-dir` to backup first
+9. **Use appropriate formats** - JUPYTER for notebooks, SOURCE for scripts
+10. **Handle errors gracefully** - Check exit codes and provide feedback
+11. **Use workspace mkdirs** - Create directories before uploading
+12. **Remember argument order** - Target path is positional, source uses `--file`
 
 ## Integration with Other Skills
 

@@ -1,6 +1,6 @@
 ---
 name: databricks-job-orchestrator
-description: Create, run, and monitor Databricks jobs for workflow automation. Use when scheduling notebooks, scripts, or pipelines, managing job runs, or monitoring job execution and logs.
+description: Create, run, and monitor Databricks jobs for workflow automation. ALWAYS asks users about compute preferences (serverless vs jobs compute) before creating jobs. Use when scheduling notebooks, scripts, or pipelines, managing job runs, or monitoring job execution and logs.
 ---
 
 # Databricks Job Orchestrator
@@ -9,9 +9,112 @@ description: Create, run, and monitor Databricks jobs for workflow automation. U
 
 This skill helps you create, configure, run, and monitor Databricks jobs using the Databricks CLI. Jobs enable automated execution of notebooks, scripts, and data pipelines on schedules or triggers.
 
+## ⚠️ CRITICAL: Always Ask About Compute
+
+**Before creating any Databricks job, you MUST:**
+
+1. **Ask the user** which compute type they want (serverless vs jobs compute vs existing cluster)
+2. **If jobs compute:** Ask for cluster details (Spark version, instance type, worker count)
+3. **Never assume** the compute type based on workspace or other factors
+4. **Check workspace capabilities** if job creation fails due to compute errors
+
+**Why this matters:**
+- Some workspaces only support serverless compute
+- Some workspaces only support classic job clusters
+- User preferences vary based on cost, performance, and workload requirements
+- Incorrect compute configuration causes job creation failures
+
 ## Workflow
 
-### 1. Create a Job from Configuration File
+### 1. Determine Compute Type (REQUIRED FIRST STEP)
+
+**IMPORTANT:** Before creating any job, you MUST ask the user about their compute preferences. Never assume serverless or jobs compute.
+
+Use the `AskUserQuestion` tool to ask:
+
+```json
+{
+  "questions": [{
+    "question": "What type of compute would you like to use for this job?",
+    "header": "Compute Type",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Serverless Compute (Recommended)",
+        "description": "Fast startup, automatically managed, pay-per-use. Requires workspace support."
+      },
+      {
+        "label": "Jobs Compute (Classic)",
+        "description": "Traditional job clusters with full control over configuration and instance types."
+      },
+      {
+        "label": "Existing Cluster",
+        "description": "Use an already running cluster. Good for testing but not recommended for production jobs."
+      }
+    ]
+  }]
+}
+```
+
+**If user chooses Jobs Compute, ask for cluster details:**
+
+```json
+{
+  "questions": [
+    {
+      "question": "What Spark version should the cluster use?",
+      "header": "Spark Version",
+      "multiSelect": false,
+      "options": [
+        {"label": "15.4.x-scala2.12 (Latest LTS)", "description": "Latest long-term support version with newest features"},
+        {"label": "14.3.x-scala2.12 (Previous LTS)", "description": "Stable previous LTS version"},
+        {"label": "13.3.x-scala2.12", "description": "Older stable version"},
+        {"label": "Custom", "description": "I'll specify a different version"}
+      ]
+    },
+    {
+      "question": "What instance type should the cluster use?",
+      "header": "Instance Type",
+      "multiSelect": false,
+      "options": [
+        {"label": "i3.xlarge (General purpose)", "description": "Balanced compute and memory, good for most workloads"},
+        {"label": "r5.xlarge (Memory optimized)", "description": "Higher memory for data-intensive operations"},
+        {"label": "c5.xlarge (Compute optimized)", "description": "Higher CPU for compute-intensive tasks"},
+        {"label": "Single Node", "description": "No workers, runs on driver only (for small jobs)"}
+      ]
+    },
+    {
+      "question": "How many worker nodes?",
+      "header": "Workers",
+      "multiSelect": false,
+      "options": [
+        {"label": "0 (Single Node)", "description": "No workers, driver only"},
+        {"label": "2 workers", "description": "Small parallel processing"},
+        {"label": "4 workers", "description": "Medium parallel processing"},
+        {"label": "8+ workers", "description": "Large parallel processing"}
+      ]
+    }
+  ]
+}
+```
+
+**If user chooses Existing Cluster, ask for cluster ID:**
+
+```json
+{
+  "questions": [{
+    "question": "What is the cluster ID?",
+    "header": "Cluster ID",
+    "multiSelect": false,
+    "options": [
+      {"label": "List available clusters", "description": "Show me running clusters to choose from"},
+      {"label": "I have a cluster ID", "description": "I'll provide the cluster ID directly"}
+    ]
+  }]
+}
+```
+
+### 2. Create a Job from Configuration File
 
 The recommended way to create jobs is using JSON configuration:
 
@@ -202,6 +305,135 @@ databricks jobs get-run-output --run-id <run-id> --output json | jq -r '.noteboo
 # Get error message if failed
 databricks jobs get-run --run-id <run-id> | jq -r '.state.state_message'
 ```
+
+## Compute Configuration Examples
+
+### Serverless Compute
+
+For workspaces that support serverless, use environments instead of clusters:
+
+```json
+{
+  "name": "Serverless Job",
+  "tasks": [{
+    "task_key": "main_task",
+    "spark_python_task": {
+      "python_file": "/Workspace/Users/user@example.com/script.py"
+    },
+    "environment_key": "default"
+  }],
+  "environments": [{
+    "environment_key": "default",
+    "spec": {
+      "client": "1"
+    }
+  }]
+}
+```
+
+**Key points:**
+- No cluster configuration needed
+- Use `environment_key` in task and define in `environments` array
+- Faster startup times
+- Automatically managed compute
+
+### Jobs Compute (Classic Cluster)
+
+For traditional job clusters with full control:
+
+```json
+{
+  "name": "Jobs Compute Job",
+  "tasks": [{
+    "task_key": "main_task",
+    "spark_python_task": {
+      "python_file": "/Workspace/Users/user@example.com/script.py"
+    },
+    "job_cluster_key": "job_cluster"
+  }],
+  "job_clusters": [{
+    "job_cluster_key": "job_cluster",
+    "new_cluster": {
+      "spark_version": "15.4.x-scala2.12",
+      "node_type_id": "i3.xlarge",
+      "num_workers": 2,
+      "spark_conf": {
+        "spark.speculation": "true"
+      },
+      "custom_tags": {
+        "project": "analytics"
+      }
+    }
+  }]
+}
+```
+
+**Key points:**
+- Full control over Spark version, instance types, workers
+- Use `job_cluster_key` to reference cluster configuration
+- Good for specific performance requirements
+- More setup but more flexibility
+
+### Single Node Cluster
+
+For small jobs that don't need distributed processing:
+
+```json
+{
+  "name": "Single Node Job",
+  "tasks": [{
+    "task_key": "main_task",
+    "spark_python_task": {
+      "python_file": "/Workspace/Users/user@example.com/script.py"
+    },
+    "job_cluster_key": "single_node"
+  }],
+  "job_clusters": [{
+    "job_cluster_key": "single_node",
+    "new_cluster": {
+      "spark_version": "15.4.x-scala2.12",
+      "node_type_id": "i3.xlarge",
+      "num_workers": 0,
+      "spark_conf": {
+        "spark.master": "local[*, 4]",
+        "spark.databricks.cluster.profile": "singleNode"
+      },
+      "custom_tags": {
+        "ResourceClass": "SingleNode"
+      }
+    }
+  }]
+}
+```
+
+**Key points:**
+- `num_workers: 0` for single node
+- Requires specific spark_conf settings
+- Cost-effective for small workloads
+- No shuffle overhead
+
+### Existing Cluster
+
+Use an already running cluster (not recommended for production):
+
+```json
+{
+  "name": "Existing Cluster Job",
+  "tasks": [{
+    "task_key": "main_task",
+    "spark_python_task": {
+      "python_file": "/Workspace/Users/user@example.com/script.py"
+    },
+    "existing_cluster_id": "1234-567890-abcdef12"
+  }]
+}
+```
+
+**Key points:**
+- Cluster must be running
+- Good for testing and development
+- Not recommended for scheduled production jobs
+- No automatic retries if cluster fails
 
 ## Common Job Configurations
 
@@ -428,6 +660,37 @@ databricks jobs list-runs --job-id <job-id> --active-only true | \
 
 ## Troubleshooting
 
+### Compute Type Errors
+
+**Symptoms:** "Only serverless compute is supported in the workspace" or "An environment is required for serverless task"
+
+**Solutions:**
+
+1. **Serverless-only workspace:**
+   - Error: "Only serverless compute is supported in the workspace"
+   - Solution: Remove all cluster configurations and use environments:
+     ```json
+     {
+       "tasks": [{
+         "environment_key": "default"
+       }],
+       "environments": [{
+         "environment_key": "default",
+         "spec": {"client": "1"}
+       }]
+     }
+     ```
+
+2. **Missing environment for serverless:**
+   - Error: "An environment is required for serverless task"
+   - Solution: Add `environment_key` to task and define `environments` array
+
+3. **Classic compute workspace:**
+   - Error: "Serverless not supported"
+   - Solution: Use `job_clusters` or `existing_cluster_id` instead of environments
+
+**Always ask the user about compute preferences before creating jobs!**
+
 ### Job Creation Fails
 
 **Symptoms:** Job creation returns error
@@ -525,16 +788,21 @@ databricks jobs list-runs --job-id <job-id> --active-only true | \
 
 ## Best Practices
 
-1. **Use job clusters** - Dedicated clusters for jobs are more reliable than shared clusters
-2. **Parameterize notebooks** - Use base_parameters to make jobs reusable
-3. **Add retry policies** - Configure retries for transient failures
-4. **Monitor job runs** - Set up notifications for failures
-5. **Use task dependencies** - Break complex workflows into smaller tasks
-6. **Version control job configs** - Store JSON configs in git
-7. **Use descriptive names** - Name jobs and tasks clearly
-8. **Tag jobs** - Use tags for organization and cost tracking
-9. **Test before scheduling** - Run manually before adding schedule
-10. **Prompt for inputs** - Never hardcode job names, cluster IDs, or paths
+1. **ALWAYS ask about compute type** - NEVER assume serverless or jobs compute. Use AskUserQuestion to determine user preference
+2. **Check workspace capabilities** - Some workspaces only support serverless, others only support jobs compute
+3. **Gather cluster details when needed** - If user chooses jobs compute, ask for Spark version, instance type, and worker count
+4. **Use job clusters** - Dedicated clusters for jobs are more reliable than shared clusters
+5. **Parameterize notebooks** - Use base_parameters to make jobs reusable
+6. **Add retry policies** - Configure retries for transient failures
+7. **Monitor job runs** - Set up notifications for failures
+8. **Use task dependencies** - Break complex workflows into smaller tasks
+9. **Version control job configs** - Store JSON configs in git
+10. **Use descriptive names** - Name jobs and tasks clearly
+11. **Tag jobs** - Use tags for organization and cost tracking
+12. **Test before scheduling** - Run manually before adding schedule
+13. **Prompt for inputs** - Never hardcode job names, cluster IDs, or paths
+14. **Validate before creation** - Check that notebooks/scripts exist before creating job
+15. **Consider cost implications** - Serverless is often more cost-effective for variable workloads
 
 ## Integration with Other Skills
 
