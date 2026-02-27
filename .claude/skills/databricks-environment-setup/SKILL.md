@@ -84,17 +84,41 @@ If databricks-connect is NOT installed, **ask the user** if they'd like to insta
 - If pyspark is installed, uninstall it first: `uv remove pyspark` or `pip uninstall pyspark`
 - The pinned version in `pyproject.toml` ensures compatibility with the project
 
-### 4. Verify Setup
+### 4. Check Authentication
 
-Create a simple test to verify everything works:
+Before verifying the connection, check if authentication is configured:
 
 ```bash
-# Test CLI connectivity (after auth - see databricks-auth-manager skill)
-databricks workspace list /
-
-# Test databricks-connect (after configuration)
-python -c "from databricks.connect import DatabricksSession; print('Import successful')"
+# Check if .databrickscfg exists and has profiles
+cat ~/.databrickscfg 2>/dev/null || echo "No config found"
 ```
+
+**If authentication is NOT configured**, stop here and tell the user to run `/databricks-auth-manager` first. The connection test requires a valid auth profile.
+
+**If authentication IS configured**, proceed to step 5.
+
+### 5. Verify Connection
+
+With authentication in place, verify end-to-end connectivity.
+
+**Required environment variables** (should be in `.env`):
+- `DATABRICKS_CONFIG_PROFILE` — your CLI profile name (defaults to DEFAULT if not set)
+- `DATABRICKS_SERVERLESS_COMPUTE_ID=auto` OR `DATABRICKS_CLUSTER_ID=<id>` — compute target
+
+**Run the connection test:**
+```bash
+source .env
+source .venv/bin/activate
+python .claude/skills/databricks-environment-setup/scripts/test_connection.py
+```
+
+This tests:
+1. databricks-connect is importable
+2. Required environment variables are set
+3. Profile exists in `~/.databrickscfg`
+4. Session can be created
+5. A test query runs successfully
+6. Unity Catalog is accessible
 
 ## Troubleshooting
 
@@ -124,25 +148,29 @@ python -c "from databricks.connect import DatabricksSession; print('Import succe
 
 ## Next Steps
 
-After installation:
+After installation and verification:
 1. Use **databricks-auth-manager** skill to configure authentication
-2. Use **databricks-connect-config** skill to set up remote execution
+2. Use **databricks-connect** skill for writing code with Databricks Connect
 3. Start writing code that runs locally and on Databricks!
 
 ## Resources
 
 ### scripts/check_environment.py
 
-A diagnostic script to check your environment:
+A diagnostic script to check installations:
 
-```python
-# Run this script to verify your setup
+```bash
 python .claude/skills/databricks-environment-setup/scripts/check_environment.py
 ```
 
-This will check:
-- Databricks CLI installation and version
-- databricks-connect installation and version
-- Python version compatibility
-- Virtual environment status
-- Common issues and recommendations
+Checks: CLI version, databricks-connect version, Python version, virtual environment status.
+
+### scripts/test_connection.py
+
+A connection test script to verify end-to-end connectivity:
+
+```bash
+python .claude/skills/databricks-environment-setup/scripts/test_connection.py
+```
+
+Checks: env vars, profile, session creation, test query, Unity Catalog access.

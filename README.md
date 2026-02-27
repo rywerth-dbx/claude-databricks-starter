@@ -11,10 +11,10 @@ This starter kit provides everything you need to develop Databricks applications
 
 In order to work locally you need to be able to write code locally that runs seamlessly on Databricks without any modifications. [Databricks Connect](https://docs.databricks.com/aws/en/dev-tools/databricks-connect/) is the perfect tool for this. So I made a skill so claude knows how use Databricks Connect. 
 
-**Skill:** [`databricks-connect-config`](.claude/skills/databricks-connect-config/)
-- Teaches Claude how to use Databricks Connenct
+**Skill:** [`databricks-connect`](.claude/skills/databricks-connect/)
+- Teaches Claude how to use Databricks Connect
 - Configure DatabricksSession for local-to-remote execution
-- Toruble shoot connection errors
+- Troubleshoot connection errors
 
 ### 2. 🔧 Workspace Operations - Databricks CLI
 
@@ -87,42 +87,24 @@ source .venv/bin/activate
 claude
 ```
 
-### 1. Install Databricks CLI
+### 1. Set Up Environment
 
-Databricks Connect was installed by `uv sync`, but the Databricks CLI is a standalone binary that needs to be installed separately:
+Databricks Connect was installed by `uv sync`, but the Databricks CLI is a standalone binary that needs to be installed separately. This skill installs the CLI, verifies databricks-connect, sets up authentication, and tests connectivity:
 
 ```bash
 /databricks-environment-setup
 ```
 
-This skill will install the Databricks CLI via curl and verify the installation.
+This will walk you through installing the CLI, checking databricks-connect, and verifying your connection. If authentication isn't configured yet, it will direct you to run `/databricks-auth-manager` to set up OAuth profiles before completing the verification.
 
-### 2. Authenticate
-
-Configure OAuth authentication for your workspace:
-
-```bash
-/databricks-auth-manager
-```
-
-This creates a profile in `~/.databrickscfg`. After this step, you can update `DATABRICKS_CONFIG_PROFILE` in your `.env` file if needed.
-
-### 3. Configure Databricks Connect
-
-Verify Databricks Connect local-to-remote execution is working:
-
-```bash
-/databricks-connect-config
-```
-
-### 4. Start Working!
+### 2. Start Working!
 
 Ask Claude To:
 - Analyze tables and explore schemas
 - Write scripts using Databricks Connect and run them locally
 - Upload files and create jobs
 
-### 5. Extend with Custom Skills and CLAUDE.MD
+### 3. Extend with Custom Skills and CLAUDE.MD
 
 Once you've got a feel for things you can start molding your set up to work for you. 
 
@@ -156,7 +138,7 @@ Each skill you create becomes part of your toolkit and can be used across projec
 │   └── skills/                              # Custom Claude Code skills
 │       ├── databricks-environment-setup/    # Install & verify CLI/tools
 │       ├── databricks-auth-manager/         # OAuth authentication setup
-│       ├── databricks-connect-config/       # Local-to-remote execution
+│       ├── databricks-connect/              # Usage guide & debugging
 │       ├── databricks-workspace-sync/       # Upload/download files
 │       └── databricks-job-orchestrator/     # Job management
 ├── .mcp.json                                # MCP server configuration (DBSQL)
@@ -177,7 +159,7 @@ Run `/databricks-environment-setup` to install
 Run `/databricks-auth-manager` to configure OAuth
 
 ### Connection Error
-Run `/databricks-connect-config` to test connection
+Run `/databricks-environment-setup` to verify connection
 
 ### MCP Server Issues
 - Verify `.env` is sourced: `source .env`

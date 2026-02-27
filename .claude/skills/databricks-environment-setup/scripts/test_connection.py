@@ -95,7 +95,7 @@ def test_connection():
 
     if not installed:
         print(f"  ❌ databricks-connect not installed: {version}")
-        print(f"\n  Install with: pip install databricks-connect")
+        print(f"\n  Install with: uv sync")
         return False
     else:
         print(f"  ✅ databricks-connect installed: {version}")
@@ -230,7 +230,8 @@ def main():
         print(f"3. Re-authenticate if needed:")
         print(f"   databricks auth login --host <workspace-url> --profile <profile-name>")
         print(f"4. Check databricks-connect installation:")
-        print(f"   pip show databricks-connect")
+        print(f"   uv run python -c \"import databricks.connect; print(databricks.connect.__version__)\"")
+        print(f"   If not installed, run: uv sync")
         cluster_id = os.environ.get("DATABRICKS_CLUSTER_ID")
         if cluster_id:
             print(f"5. Verify cluster is running:")
