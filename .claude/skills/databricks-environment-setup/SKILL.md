@@ -29,8 +29,8 @@ First, check what's already installed:
 # Check Databricks CLI
 databricks --version
 
-# Check databricks-connect
-pip show databricks-connect
+# Check databricks-connect (via uv)
+uv run python -c "import databricks.connect; print(databricks.connect.__version__)"
 
 # Check Python version
 python --version
@@ -38,7 +38,7 @@ python --version
 
 **Expected versions (2026):**
 - Databricks CLI: 0.205.0 or higher
-- databricks-connect: 18.0.1 or higher
+- databricks-connect: 17.3.x or higher (pinned in pyproject.toml)
 - Python: 3.12.x recommended
 
 ### 2. Install Databricks CLI
@@ -69,37 +69,20 @@ Download the latest release from https://github.com/databricks/cli/releases
 databricks --version
 ```
 
-### 3. Install databricks-connect
+### 3. Check databricks-connect
 
-Always use a Python virtual environment:
+databricks-connect is managed by this project's `pyproject.toml` and installed via `uv sync`. Check if it's available:
 
 ```bash
-# Create virtual environment (if not already in one)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install databricks-connect
-pip install databricks-connect
+uv run python -c "from databricks.connect import DatabricksSession; print('databricks-connect is installed')"
 ```
 
-**To match specific Databricks Runtime version:**
-```bash
-# For Databricks Runtime 17.3 LTS
-pip install "databricks-connect==17.3.*"
-
-# For Databricks Runtime 18.0
-pip install "databricks-connect==18.0.*"
-```
+If databricks-connect is NOT installed, **ask the user** if they'd like to install it by running `uv sync`. Do not install it automatically.
 
 **Important notes:**
 - databricks-connect and pyspark are mutually exclusive
-- If you have pyspark installed, uninstall it first: `pip uninstall pyspark`
-- Always use virtual environments to avoid conflicts
-
-**Verify installation:**
-```bash
-pip show databricks-connect
-```
+- If pyspark is installed, uninstall it first: `uv remove pyspark` or `pip uninstall pyspark`
+- The pinned version in `pyproject.toml` ensures compatibility with the project
 
 ### 4. Verify Setup
 
@@ -130,16 +113,14 @@ python -c "from databricks.connect import DatabricksSession; print('Import succe
 
 **Issue: Import errors**
 - Ensure you're using Python 3.12.x
-- Check that pyspark is not installed: `pip list | grep pyspark`
-- Verify pandas version: `pip install "pandas>=1.0.5,<3"`
+- Check that pyspark is not installed: `uv run pip list | grep pyspark`
+- Run `uv sync` to ensure all dependencies are installed
 
 **Issue: Version mismatch**
-- Match your databricks-connect version to your cluster's Databricks Runtime
-- Use `pip install "databricks-connect==X.Y.*"` where X.Y matches your runtime
+- The version is pinned in `pyproject.toml` — update it there and run `uv sync`
 
 **Issue: Virtual environment problems**
-- Deactivate and recreate: `deactivate && rm -rf venv && python -m venv venv`
-- Always activate before installing: `source venv/bin/activate`
+- Recreate with: `rm -rf .venv && uv sync`
 
 ## Next Steps
 

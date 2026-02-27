@@ -80,6 +80,9 @@ Then, navigate to the directory and start Claude Code:
 # Load environment variables
 source .env
 
+# Activate the virtual environment so Claude has access to installed packages
+source .venv/bin/activate
+
 # Start Claude Code in this directory
 claude
 ```

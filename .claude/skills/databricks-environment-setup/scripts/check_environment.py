@@ -59,37 +59,26 @@ def check_cli():
 def check_databricks_connect():
     """Check databricks-connect installation."""
     print("\n🔍 Checking databricks-connect...")
-    success, stdout, stderr = run_command("pip show databricks-connect")
+    success, stdout, stderr = run_command(
+        "uv run python -c \"import databricks.connect; print(databricks.connect.__version__)\""
+    )
 
     if success and stdout:
-        # Parse version from output
-        version = None
-        for line in stdout.split('\n'):
-            if line.startswith('Version:'):
-                version = line.split(':', 1)[1].strip()
-                break
+        version = stdout.strip()
+        print(f"  ✅ databricks-connect installed: {version}")
 
-        if version:
-            print(f"  ✅ databricks-connect installed: {version}")
-
-            # Check if version is recent (18.x or 17.x)
-            try:
-                major = int(version.split('.')[0])
-                if major >= 17:
-                    print(f"  ✅ Version is current (17.x or 18.x)")
-                else:
-                    print(f"  ⚠️  Version {version} may be outdated. Consider upgrading to 18.x")
-                    print(f"     Run: pip install --upgrade databricks-connect")
-            except:
-                pass
-            return True
-        else:
-            print(f"  ⚠️  Could not determine databricks-connect version")
-            return False
+        try:
+            major = int(version.split('.')[0])
+            if major >= 17:
+                print(f"  ✅ Version is current")
+            else:
+                print(f"  ⚠️  Version {version} may be outdated. Update pyproject.toml and run: uv sync")
+        except:
+            pass
+        return True
     else:
         print(f"  ❌ databricks-connect not found")
-        print(f"     Install: pip install databricks-connect")
-        print(f"     Note: Use a virtual environment!")
+        print(f"     Install by running: uv sync")
         return False
 
 
@@ -114,19 +103,16 @@ def check_python():
 
 
 def check_venv():
-    """Check if running in virtual environment."""
+    """Check if uv virtual environment exists."""
     print("\n🔍 Checking virtual environment...")
-    in_venv = hasattr(sys, 'real_prefix') or (
-        hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
-    )
+    venv_path = Path(".venv")
 
-    if in_venv:
-        print(f"  ✅ Running in virtual environment")
-        print(f"     Location: {sys.prefix}")
+    if venv_path.exists() and (venv_path / "bin" / "python").exists():
+        print(f"  ✅ uv virtual environment found at .venv/")
         return True
     else:
-        print(f"  ⚠️  Not running in a virtual environment")
-        print(f"     Recommend: python -m venv venv && source venv/bin/activate")
+        print(f"  ❌ No .venv directory found")
+        print(f"     Run: uv sync")
         return False
 
 
