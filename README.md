@@ -123,7 +123,7 @@ Want to work with Lakebase, Databricks Apps, or other features not covered by th
 
 1. **Direct Claude to documentation** - Share Databricks docs for the feature you want to use
 2. **Work with Claude to try it** - Experiment and test the feature together
-3. **Create a skill for it** - Use the included [skill-creator](/.claude/skills/skill-creator/) skill: simply tell claude to take what it's learned and use it's skill-creator skill to create a skill
+3. **Create a skill for it** - Install the [skill-creator](https://github.com/anthropics/claude-code-skill-creator) plugin (`claude plugin add skill-creator`), then tell Claude to use its skill-creator skill to turn what it's learned into a reusable skill
 
 Each skill you create becomes part of your toolkit and can be used across projects.
 
