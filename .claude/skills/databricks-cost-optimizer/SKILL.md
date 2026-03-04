@@ -1,7 +1,7 @@
 ---
 name: databricks-cost-optimizer
 description: Analyze Databricks costs and find optimization opportunities using system tables.
-user_invocable: true
+disable-model-invocation: true
 ---
 
 # Databricks Cost Optimizer
