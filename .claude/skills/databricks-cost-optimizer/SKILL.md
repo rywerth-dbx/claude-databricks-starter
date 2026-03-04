@@ -1,6 +1,7 @@
 ---
 name: databricks-cost-optimizer
-description: Use when analyzing Databricks costs, finding savings opportunities, right-sizing clusters, identifying failing jobs, or optimizing compute spend using system tables. Triggers on cost analysis, spend review, optimization, right-sizing, waste identification.
+description: Analyze Databricks costs and find optimization opportunities using system tables.
+user_invocable: true
 ---
 
 # Databricks Cost Optimizer

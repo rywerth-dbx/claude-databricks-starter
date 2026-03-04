@@ -104,6 +104,8 @@ Ask Claude To:
 - Write scripts using Databricks Connect and run them locally
 - Upload files and create jobs
 
+> **Tip:** An example skill for cost optimization is included. Run `/databricks-cost-optimizer` to analyze your Databricks spend and find savings opportunities using system tables.
+
 ### 3. Extend with Custom Skills and CLAUDE.MD
 
 Once you've got a feel for things you can start molding your set up to work for you. 
